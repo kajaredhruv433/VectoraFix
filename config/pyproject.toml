@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vectorafix"
+version = "1.0.0"
+description = "Autonomous Multi-Agent AI System for Production Incident Diagnosis, Sandboxed Code Repair, Verification, and Push-to-Deploy Delivery"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+authors = [
+    { name = "Dhruv Kajare", email = "kajaredhruv3@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "motor>=3.6.0",
+    "pymongo>=4.9.0",
+    "langchain>=0.3.0",
+    "langgraph>=0.2.20",
+    "langchain-google-genai>=2.0.0",
+    "docker>=7.1.0",
+    "cryptography>=43.0.0",
+    "httpx>=0.27.0",
+    "tree-sitter>=0.23.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.6.0",
+    "mypy>=1.11.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_configs = true
