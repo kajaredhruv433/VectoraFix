@@ -32,7 +32,7 @@ flowchart TD
     Coordinator --> Specialists
     Specialists --> PlanReviewer
     
-    PlanReviewer -- "Needs Revision (Round < 3)" --> Coordinator
+    PlanReviewer -- "Needs Revision (Max 3 Rounds)" --> Coordinator
     PlanReviewer -- "Security Veto / Hard Failure" --> Halt(["Workflow Rejected"])
     PlanReviewer -- "Approved" --> RepairEng
 
@@ -87,15 +87,15 @@ stateDiagram-v2
     SpecialistReview --> PlanReview: Specialists Submit Critiques
 
     state PlanReview <<choice>>
-    PlanReview --> Coordination: Needs Revision (Round < 3)
+    PlanReview --> Coordination: Needs Revision - Under 3 Rounds
     PlanReview --> Rejected: Safety Veto / Security Reject
     PlanReview --> OperatorGate: Approved by Plan Reviewer
 
-    OperatorGate --> CodeRepair: Operator Clicks "Start Repair"
+    OperatorGate --> CodeRepair: Operator Clicks Start Repair
     CodeRepair --> CodeReview: Repair Engineer Emits Patch
     
     state CodeReview <<choice>>
-    CodeReview --> CodeRepair: Diff Rejected (Round < 2)
+    CodeReview --> CodeRepair: Diff Rejected - Under 2 Rounds
     CodeReview --> QualityGate: Diff Approved
 
     QualityGate --> BranchPush: Tests & Scope Passed
@@ -116,17 +116,19 @@ A common failure mode in multi-agent architectures is context dilution and exces
 
 ```mermaid
 flowchart TD
-    Repo[Full Repository Tree] --> ASTScanner[AST Scanner]
-    ASTScanner --> Filter[Remove Function Bodies & Comments]
-    Filter --> SymbolMap[Structured Symbol Map]
+    Repo["Full Repository Tree"] --> ASTScanner["AST Scanner"]
+    ASTScanner --> Filter["Remove Function Bodies and Comments"]
+    Filter --> SymbolMap["Structured Symbol Map"]
     
-    SymbolMap --> Chunk1[Module Interfaces & Signatures]
-    SymbolMap --> Chunk2[Import Dependency Graphs]
-    SymbolMap --> Chunk3[Class & Method Contracts]
+    SymbolMap --> Chunk1["Module Interfaces and Signatures"]
+    SymbolMap --> Chunk2["Import Dependency Graphs"]
+    SymbolMap --> Chunk3["Class and Method Contracts"]
 
-    Chunk1 & Chunk2 & Chunk3 --> Cache[(Token-Optimized AST Vault)]
+    Chunk1 --> Cache[("Token-Optimized AST Vault")]
+    Chunk2 --> Cache
+    Chunk3 --> Cache
     
-    Cache --> Prompt[Prompts receive only 5-10% of tokens<br/>compared to raw file injection]
+    Cache --> Prompt["Prompts receive only 5-10% of tokens<br/>compared to raw file injection"]
 ```
 
 - **90% Reduction in Token Ingestion**: Prompts include only function signatures, parameter types, return values, and module imports.

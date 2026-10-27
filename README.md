@@ -133,11 +133,12 @@ VectoraFix employs a directed acyclic graph (DAG) and cyclic review state machin
 ```mermaid
 classDiagram
     class BaseAgent {
+        <<abstract>>
         +AgentRole role
         +string model_name
         +int timeout_seconds
-        +analyze(state) dict
-        +review_plan(draft_plan, context) SpecialistReview
+        +analyze(state)
+        +review_plan(draft_plan)
     }
 
     class Investigator {
@@ -156,12 +157,9 @@ classDiagram
         +summon_specialists()
         +synthesize_repair_dictionary()
     }
-    class DomainSpecialists {
-        +PythonSpecialist
-        +TypeScriptSpecialist
-        +DatabaseSpecialist
-        +SecuritySpecialist
-        +DevOpsSpecialist
+    class DomainSpecialist {
+        +string domain_name
+        +audit_domain_rules()
     }
     class PlanReviewer {
         +audit_plan_completeness()
@@ -179,7 +177,7 @@ classDiagram
     BaseAgent <|-- RepositoryAnalyst
     BaseAgent <|-- TestEngineer
     BaseAgent <|-- Coordinator
-    BaseAgent <|-- DomainSpecialists
+    BaseAgent <|-- DomainSpecialist
     BaseAgent <|-- PlanReviewer
     BaseAgent <|-- RepairEngineer
     BaseAgent <|-- CodeReviewer
@@ -253,15 +251,18 @@ flowchart LR
         Vault[("Artifact Storage Vault")]
     end
 
-    subgraph Container ["Docker Runtime Sandbox"]
+    subgraph Sandbox ["Docker Runtime Sandbox"]
         direction TB
-        SecurityPolicy["Security Constraints:<br/>- Non-Root UID 1000<br/>- Read-Only Root Filesystem<br/>- CPU: 2 Cores | RAM: 4 GB<br/>- Command Timeout: 180s"]
+        SecurityPolicy["Security Constraints:<br/>- Non-Root UID 1000<br/>- Read-Only Root Filesystem<br/>- CPU: 2 Cores, RAM: 4 GB<br/>- Command Timeout: 180s"]
         NetworkController["Ephemeral Network Bridge<br/>(Toggled strictly for package installs)"]
-        WorkspaceMount["/workspace (Disposable Snapshot Mount)<br/>- Prohibited: .git/, .env*, credentials<br/>- SHA-256 Pre-write verification<br/>- Atomic write & rollback protection"]
+        WorkspaceMount["/workspace Snapshot Mount<br/>- Prohibited: .git, .env, credentials<br/>- SHA-256 Pre-write verification<br/>- Atomic write and rollback protection"]
     end
 
-    CP -->|Spawn Ephemeral Container| Container
-    Container -->|Store Patches & Logs| Vault
+    CP -->|"Spawn Ephemeral Container"| SecurityPolicy
+    SecurityPolicy --> NetworkController
+    NetworkController --> WorkspaceMount
+    WorkspaceMount -->|"Store Patches & Logs"| Vault
+    CP --> DB
 ```
 
 ### Security Guardrails
@@ -281,18 +282,18 @@ When automated branch pushes fail due to GitHub App permission lapses, expired O
 ```mermaid
 stateDiagram-v2
     [*] --> DiagnosisApproved: Multi-Agent Consensus Reached
-    DiagnosisApproved --> RepairExecution: Operator Clicks "Start Repair"
+    DiagnosisApproved --> RepairExecution: Operator Clicks Start Repair
     RepairExecution --> Verification: Deterministic Quality Gate
     Verification --> GitPush: Attempt Branch Push via GitHub API
     
-    GitPush --> Deployed: Push Succeeded (CI/CD Webhook Triggered)
+    GitPush --> Deployed: Push Succeeded - CI/CD Webhook Triggered
     Deployed --> [*]
 
-    GitPush --> ArtifactVault: Push Failed (Auth/Rate Limit/Protection)
-    ArtifactVault --> SavedState: Persist .patch & clean snapshot in Vault
-    SavedState --> OperatorResolution: UI displays instructions to operator
-    OperatorResolution --> ManualPush: Operator clicks "Push Saved Repair"
-    ManualPush --> Deployed: Reapply vault patch & push directly (0 LLM Tokens)
+    GitPush --> ArtifactVault: Push Failed - Auth or Rate Limit
+    ArtifactVault --> SavedState: Persist Patch and Clean Snapshot in Vault
+    SavedState --> OperatorResolution: UI Displays Instructions
+    OperatorResolution --> ManualPush: Operator Clicks Push Saved Repair
+    ManualPush --> Deployed: Reapply Vault Patch and Push Directly
 ```
 
 ---

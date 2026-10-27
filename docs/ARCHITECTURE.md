@@ -61,10 +61,18 @@ flowchart TD
         Hosting["Production Host (Vercel / Render / Railway)"]
     end
 
-    Layer1 <--> Layer2
-    Layer2 <--> Layer3
-    Layer2 <--> Layer4
-    Layer2 <--> GH
+    UI_Gate <--> API
+    API <--> Scrub
+    Scrub --> StateMgr
+    StateMgr <--> DB
+    StateMgr <--> Vault
+    API <--> ParallelAgents
+    Coord <--> ReviewLoop
+    ReviewLoop <--> RepairLoop
+    RepairLoop --> Container
+    Container --> TerminalRunner
+    TerminalRunner --> QualityGate
+    QualityGate --> GH
     GH --> Hosting
 ```
 

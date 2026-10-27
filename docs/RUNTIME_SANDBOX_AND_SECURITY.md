@@ -23,7 +23,7 @@ flowchart TD
     subgraph DefenseLayer2 ["Defense Layer 2: Docker Sandbox Container"]
         NonRoot["Non-Root User (UID 1000)"]
         ReadOnly["Read-Only Root Filesystem (--read-only)"]
-        ResourceCaps["Resource Quotas: 2 Cores | 4 GB RAM | 180s Timeout"]
+        ResourceCaps["Resource Quotas: 2 Cores, 4 GB RAM, 180s Timeout"]
         NetGating["Controlled Network Bridge (Toggled for npm/pip only)"]
         AtomicWrites["SHA-256 Validated Atomic Writes & Rollback Vault"]
     end
@@ -34,10 +34,12 @@ flowchart TD
         TestPass["Manifest-Derived Test Verification (pytest / npm test)"]
     end
 
-    UntrustedZone --> DefenseLayer1
-    DefenseLayer1 --> DefenseLayer2
-    DefenseLayer2 --> DefenseLayer3
-    DefenseLayer3 --> Production["Verified Branch Push to GitHub"]
+    Logs --> Scrubber
+    RepoSource --> Scrubber
+    Webhooks --> Scrubber
+    AuthGate --> NonRoot
+    AtomicWrites --> ScopeCheck
+    TestPass --> Production["Verified Branch Push to GitHub"]
 ```
 
 ---
@@ -55,7 +57,10 @@ flowchart LR
     ScrubberEngine --> R3["Private Key Blocks (RSA, ECDSA)"]
     ScrubberEngine --> R4["Basic Auth & Connection Strings"]
 
-    R1 & R2 & R3 & R4 --> SanitizedPayload["Sanitized Diagnostic Document<br/>(Tokens replaced with [REDACTED_SECRET])"]
+    R1 --> SanitizedPayload["Sanitized Diagnostic Document<br/>(Tokens replaced with REDACTED_SECRET)"]
+    R2 --> SanitizedPayload
+    R3 --> SanitizedPayload
+    R4 --> SanitizedPayload
     SanitizedPayload --> DB[("MongoDB")]
     SanitizedPayload --> LLM["Gemini Model Ingestion"]
 ```
@@ -95,8 +100,8 @@ flowchart TB
         end
     end
 
-    HostDaemon --> SandboxContainer
-    SandboxContainer --> VaultDir
+    HostDaemon --> ContainerLimits
+    Workspace --> VaultDir
 ```
 
 ### Container Hardening Specifications
